@@ -125,7 +125,7 @@ To compensate for this uncertainty, sBOSC applies a spatial smoothing across vox
                     [episodes, episocc] = sBOSC_episodes(spatialpks, powspctm, cfg);
 ```
 
-We have recovered out simulated episode at the simulated source!
+We have recovered our simulated episode at the simulated source!
 
 
 ![image_5.png](README_media/image_5.png)
