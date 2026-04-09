@@ -266,7 +266,7 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
 
         % Recover amplitude
         recap_ampl = recap_pow;
-        if mod(nfft, 2) == 0
+        if is_even
             recap_ampl(:,2:end-1) = recap_pow(:,2:end-1) ./ 2;
         else
             recap_ampl(:,2:end) = recap_pow(:,2:end) ./ 2;
@@ -274,14 +274,17 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
 
         recap_ampl = sqrt(recap_ampl) * nfft;
 
+        dataphase_complex = data_fft_matrix(:, tr, 1:limit);
+        dataphase_matrix = reshape(dataphase_complex, [nVoxblock, limit]);
+
         % Take the original phase (individually in case of trials)
-        dataphase = angle(squeeze(data_fft_matrix(:, tr, 1:size(recap_ampl,2))));
-        dataphase(:,1) = 0;
+        dataphase = angle(dataphase_matrix);
+        dataphase(:, 1) = 0; % DC phase must be 0
         
         positivefx = recap_ampl .* exp(1i * dataphase);
 
         % Mirror positive frequencies for IFFT (exlc. nyq)
-        if mod(nfft, 2) == 0
+        if is_even
             fullspectra = [ positivefx, conj(fliplr(positivefx(:,2:end-1)))];
         else
             fullspectra = [ positivefx, conj(fliplr(positivefx(:,2:end)))];
