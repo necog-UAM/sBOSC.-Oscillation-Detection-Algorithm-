@@ -83,7 +83,7 @@ aperiodic.sampleinfo = [start_samples, end_samples];
 powspctm = zeros(nTrials, nVox, nFrex, nTime, 'single');
 
 frex = zeros(1, nFrex);
-thshld = zeros(nFrex, 1, 'single');
+thshld = zeros(nFrex, 1,'single');
 
 % I. Time-Frequency decomposition
 for fx = 1:nFrex
@@ -112,12 +112,12 @@ for fx = 1:nFrex
     % Compute the 95% percentile to obtain threshold
     powspctmaperiodic = permute(powspctmaperiodic, [2, 1, 4, 3]);  
     powspctmaperiodic = reshape(powspctmaperiodic, [nVox, nTrials * nTime]);
-    
-    thshld(fx) = prctile(prctile(powspctmaperiodic, 95, 1), 95, 2);
-  
+
+    % Calculate threshold 
+    thshld(fx) = prctile(prctile(powspctmaperiodic, apthshld, 1), apthshld, 2);
+
     clear freqaperiodic powspctmaperiodic
 end
-warning('on', 'all');
 
 thshld = repmat(thshld', nVox, 1);
 

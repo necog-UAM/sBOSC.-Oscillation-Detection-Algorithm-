@@ -270,6 +270,10 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     peakfit = [fg.peak_fit]; 
     peakfit = reshape(peakfit, [length(fg(1).peak_fit), length(fg)])';
 
+    peak_ratio = peakfit ./ fooofedsp;
+    aperiodic_ratio = 1 - peak_ratio;
+    aperiodic_ratio(aperiodic_ratio < 0) = 0;
+
     % Extract power spectrum
     powspctmlog = [fg.power_spectrum]; 
     powspctmlog = reshape(powspctmlog, [length(fg(1).power_spectrum), length(fg)])';
@@ -282,8 +286,12 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     aperiodic_timesignal = zeros(nVoxblock, nfft, nTrialsblock, 'single');
 
     for tr = 1:nTrialsblock
-        % Take the DC we excluded from FOOOF before
-        recap_pow = [pow_fft_matrix(:, tr, 1), apfit]; 
+        raw_power = reshape(pow_fft_matrix(:, tr, 2:end), [nVoxblock, limit-1]);
+        raw_aperiodic = raw_power .* aperiodic_ratio;
+        
+        % Take the DC 
+        dc_component = reshape(pow_fft_matrix(:, tr, 1), [nVoxblock, 1]);
+        recap_pow = [dc_component, raw_aperiodic]; 
 
         % Recover amplitude
         recap_ampl = recap_pow;
@@ -300,7 +308,6 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
 
         % Take the original phase (individually in case of trials)
         dataphase = angle(dataphase_matrix);
-        dataphase(:, 1) = 0; % DC phase must be 0
         
         positivefx = recap_ampl .* exp(1i * dataphase);
 
@@ -338,7 +345,6 @@ end
             defaultopts = getfield(process_fooof('GetDescription'), 'options');
             bs_avail = true;
         catch
-            % Fallback manual si no se puede acceder
             bs_avail = false;
             defaultopts.peakwidth.Value{1}     = [0.5, 12];
             defaultopts.maxpeaks.Value{1}      = 3;
@@ -352,7 +358,7 @@ end
             defaultopts.sortbands.Value        = [];
         end
 
-        % Use cfg.fooof if it exists, otherwise empty
+        % Use cfg.fooof
         if isfield(cfg, 'fooof'), user_opts = cfg.fooof; else, user_opts = []; end
 
         opt = [];

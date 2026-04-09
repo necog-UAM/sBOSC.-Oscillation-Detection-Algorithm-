@@ -39,14 +39,14 @@ We then add a discrete 12 Hz sinusoidal oscillatory event directly into a user\-
                     cfg = [];
                     cfg.apgenerators = 'roi';
                     cfg.fsample  = 512;
-                    cfg.length = 3;
+                    cfg.length = 5;
                     cfg.figures = 'yes';
                     
                     % Events
                     cfg.events = [];
                     cfg.events(1).voxel  = 2963;
                     cfg.events(1).freq   = 12;
-                    cfg.events(1).cycles = 5;
+                    cfg.events(1).cycles = 7;
                     cfg.events(1).snr = 1;
                     cfg.events(1).coexist_with = 0;
                     cfg.events(1).shape = 'sine';
@@ -78,7 +78,7 @@ For the next step, we need to remove the aperiodic activity (1/f) from our signa
                     sim_aperiodic = sBOSC_aperiodic(simsignal_source, cfg);
 ```
 
-The result is the aperiodic time signal, ideally containing no oscillatory activity.
+The resulting aperiodic signal is intended to be free of oscillatory components.
 
 
 ![image_2.png](README_media/image_2.png)
@@ -125,7 +125,7 @@ To compensate for this uncertainty, sBOSC applies a spatial smoothing across vox
                     [episodes, episocc] = sBOSC_episodes(spatialpks, powspctm, cfg);
 ```
 
-We have recovered our simulated episode at the simulated source!
+We have recovered our simulated episode at the simulated source! 
 
 
 ![image_5.png](README_media/image_5.png)
