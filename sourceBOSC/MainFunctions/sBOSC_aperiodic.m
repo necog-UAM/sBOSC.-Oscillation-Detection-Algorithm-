@@ -225,11 +225,32 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     % ---------------------------------------------------------------------
     % 4.2. FOOOF - Matlab BrainStorm wrapper
     % ---------------------------------------------------------------------
+   
+    is_continuous = isfield(cfg, 'datatype') && strcmp(cfg.datatype, 'continuous');
+
+    % Apply Welch to smooth the spectrum
+    if is_continuous 
+        data_wch = datainside(:, :, 1)'; 
+        
+        welch_win = round(2 * fs); 
+        if welch_win > nfft
+            welch_win = nfft; 
+        end
+        
+        % Apply welch
+        [pxx, ~] = pwelch(data_wch, hanning(welch_win), [], nfft, fs);
+        
+        % Scale PSD back to power
+        mean_pow_fft = (pxx') * (fs/nfft); 
+        
+    else 
+        avg_pow = mean(pow_fft_matrix, 2); % Trial average
+        mean_pow_fft = reshape(avg_pow, [nVoxblock, limit]); 
+    end
 
     % Configure input for brainstorm wrapper
-    TF = zeros(nVoxblock , 1, size(pow_fft,2)-1); % Do not work with DC 0. Input all freqs but first
-    avg_pow = mean(pow_fft_matrix(:,:,2:end), 2);
-    TF(:,1,:) = double(movmean(avg_pow,10,3)); % smooth the powspctrm
+    TF = zeros(nVoxblock , 1, limit-1); % Do not work with DC 0. Input all freqs but first
+    TF(:, 1, :) = double(mean_pow_fft(:, 2:end));
 
     % Get FOOOF wrapper configuration
     opts = get_fooof_options(frq, cfg);
