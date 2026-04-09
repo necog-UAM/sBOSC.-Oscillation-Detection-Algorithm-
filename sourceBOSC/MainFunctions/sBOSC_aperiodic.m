@@ -125,7 +125,12 @@ switch cfg.datatype
             % Define index
             idx_st = ((b-1) * windowsamples) + 1;
             idx_end = idx_st + windowsamples - 1;
-
+            % Last block can be longer to include all the data
+            if b == nBlocks
+                idx_end = nTime; 
+            else
+                idx_end = idx_st + windowsamples - 1;
+            end
            
             % Extract block of data
             datablock = datamatrix(:, idx_st:idx_end);
