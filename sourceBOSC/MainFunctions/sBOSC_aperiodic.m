@@ -193,22 +193,30 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     data_fft = fft(data_vector, [] ,2);
 
     if mod(nfft, 2) == 0
-        amp_fft = abs(data_fft(:,1:nfft/2+1)) ./ nfft;
-        frq = double(linspace(0, fs/2, nfft/2 + 1));
+        limit = nfft/2 + 1;
+        is_even = true;
     else
-        amp_fft = abs(data_fft(:,1:(nfft+1)/2)) ./ nfft;
-        frq = double(linspace(0, fs/2, (nfft + 1)/2));
+        limit = (nfft+1)/2;
+        is_even = false;
     end
-    pow_fft = amp_fft.^2;
 
-        % Take positive frequencies
-    if mod(nfft, 2) == 0
-        amp_fft(:,2:end-1) = 2 * amp_fft(:,2:end-1);
-        pow_fft(:,2:end-1) = 2 * pow_fft(:,2:end-1);
+    % Get amplitude
+    amp_fft = abs(data_fft(:, 1:limit)) ./ nfft;
+    frq = (0:limit-1) * (fs / nfft);
+   
+    % Single-Sided Amplitude
+    if is_even
+        % Exclude DC and Nyquist
+        amp_fft(:, 2:end-1) = 2 * amp_fft(:, 2:end-1);
     else
-        amp_fft(:,2:end) = 2 * amp_fft(:,2:end);
-        pow_fft(:,2:end) = 2 * pow_fft(:,2:end);
+        % Exclude DC
+        amp_fft(:, 2:end)   = 2 * amp_fft(:, 2:end);
     end
+
+    % Calculate Power
+    pow_fft = (amp_fft.^2) / 2;
+    pow_fft(:, 1) = amp_fft(:, 1).^2; % DC
+    if is_even; pow_fft(:, end) = amp_fft(:, end).^2; end % Nyquist
 
     % Return to original dimensions
     pow_fft_matrix = reshape(pow_fft, [nVoxblock, nTrialsblock, length(frq)]);
