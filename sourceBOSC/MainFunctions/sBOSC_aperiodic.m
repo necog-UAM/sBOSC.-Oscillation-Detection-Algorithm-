@@ -93,7 +93,7 @@ elseif strcmp(cfg.datatype, 'trials')
     try
         datamatrix = cat(3, data.trial{:});
     catch
-        error('sBOSC:DimError', 'Trials must have same lengths.');
+        error('sBOSC:DimError', 'Trials must have same length.');
     end
 end
 
@@ -150,7 +150,6 @@ switch cfg.datatype
         idx_end = min(idx_end, nTime);
     
         datablock       = datamatrix(:, idx_st:idx_end);
-                cfg.debug_tstart = data.time{1}(idx_st); %%%%%%%%><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
         aperiodic_block = aperiodic2time(datablock, fs, cfg);
     
         aperiodic_continuous(:, idx_st:idx_end) = aperiodic_continuous(:, idx_st:idx_end) + aperiodic_block;
@@ -313,31 +312,6 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
         raw_power = reshape(pow_fft_matrix(:, tr, 2:end), [nVoxblock, limit-1]);
         raw_aperiodic = raw_power .* aperiodic_ratio;
 
-        if isfield(cfg, 'debug_tstart')
-            t_start = cfg.debug_tstart;
-        else
-            t_start = 0;
-        end
-        t_block = t_start + (0:nfft-1) / fs;        
-        figure('Position', [100 100 1400 500])      
-        subplot(311)
-        plot(data.time{1}, data.trial{1}(2963,:))
-        hold on
-        plot(t_block, datainside(2963,:))
-        title('Extract aperiodic from a segment of the signal')
-        subplot(312)
-        loglog(frq(2:end), raw_power(2963,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Original Power');
-        hold on;
-        loglog(frq(2:end), raw_aperiodic(2963,:), 'm', 'LineWidth', 1.5, 'DisplayName', 'Aperiodic Power');
-        ylabel('Power');
-        title('Original and Aperiodic Power')
-        subplot(313)
-        semilogx(frq(2:end), peakfit(2963,:), 'm', 'LineWidth', 2, 'DisplayName', 'PeakFit');
-        ylim([0.9 max(peakfit(2963,:))*1.2]);
-        title('Detected peaks')
-        xlabel('Frequency (Hz)')
-
-        
         % Take the DC 
         dc_component = reshape(pow_fft_matrix(:, tr, 1), [nVoxblock, 1]);
         recap_pow = [dc_component, raw_aperiodic]; 
