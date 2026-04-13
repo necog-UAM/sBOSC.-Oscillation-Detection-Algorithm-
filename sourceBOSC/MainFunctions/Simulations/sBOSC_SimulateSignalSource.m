@@ -148,7 +148,7 @@ end
         
         subplot(422)
         randap = randi(napgens);
-        plot(aperiodic_vol(apgenlist(randap),:), 'Color', pinkcol, 'LineWidth',1)
+        plot(time, aperiodic_vol(apgenlist(randap),:), 'Color', pinkcol, 'LineWidth',1)
         title('Aperiodic at the source')
     end
 
@@ -169,7 +169,7 @@ aperiodicdata_norm = aperiodicdata ./ mean(rms(aperiodicdata,2),'omitmissing');
     %--% Figure: Aperiodic + gaussian noise  in sensors
     if strcmp(figures,'yes')
         subplot(424)
-        plot(aperiodicdata_norm(randi(size(aperiodicdata_norm,1)),:),'Color', pinkcol, 'LineWidth',1)
+        plot(time, aperiodicdata_norm(randi(size(aperiodicdata_norm,1)),:),'Color', pinkcol, 'LineWidth',1)
         title('Projected aperiodic at the sensor + gaussian noise')
     end
 
@@ -201,7 +201,7 @@ unique_vox = unique(simvox, 'stable');
   %--% Figure: oscillation at source
     if strcmp(figures,'yes')
         subplot(426)
-        plot(oscillation,'b', 'LineWidth',1)
+        plot(time, oscillation,'b', 'LineWidth',1)
         title('Oscillation at the source')
     end
 
@@ -277,7 +277,7 @@ simdata = aperiodicdata_norm + sim_sensors_norm + oscillation_channel;
         [~, ch] = max(rms(sim_sensors_norm, 2));
         if ch >1; else, ch=chidx;end
         subplot(428)
-        plot(simdata(ch,:),'b', 'LineWidth',1)
+        plot(time, simdata(ch,:),'b', 'LineWidth',1)
         title('Project all data to sensors')
     end
 
@@ -296,6 +296,7 @@ simsignal.sim.events = cfg.events;
 simsignal.sim.osctimepoints = osc_pnts;
 simsignal.sim.apgenerators = apgenerators;
 simsignal.sim.fsample = fsample;
+simsignal.sim.oscillation = oscillation;
 
 end
 

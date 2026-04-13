@@ -72,7 +72,7 @@ end
 % 1.3 Trial Block Size (If cfg.datatype = 'trials')
 if strcmp(cfg.datatype, 'trials')
     if ~isfield(cfg, 'trialblocksize') || isempty(cfg.trialblocksize)
-        cfg.trialblocksize = 'all'; % Default según doc
+        cfg.trialblocksize = 'all';
     end
 end
 
@@ -96,9 +96,14 @@ elseif strcmp(cfg.datatype, 'trials')
         error('sBOSC:DimError', 'Trials must have same lengths.');
     end
 end
-% Define
-[nVox, nTime, nTrials] = size(datamatrix);
 
+% Define
+if strcmp(cfg.datatype, 'continuous')
+    [nVox, nTime] = size(datamatrix);
+    nTrials = 1;
+else
+    [nVox, nTime, nTrials] = size(datamatrix);
+end
 
 % -------------------------------------------------------- %
 % 3. Switch continuous or trials
@@ -106,43 +111,60 @@ end
 
 switch cfg.datatype
 
-    %% Case: continuous
+%% Case: continuous
     case 'continuous'
-        % Length in seconds of the window to segment signal
+
         if ischar(cfg.windowlength) && strcmp(cfg.windowlength, 'all')
-            windowsamples = nTime; 
+            windowsamples = nTime;
+            overlap       = 0;
+            step_samples  = nTime;
         else
             windowsamples = round(cfg.windowlength * fs);
+        if isfield(cfg, 'overlap')
+            overlap = cfg.overlap;
+        else
+            overlap     = 0.5;
+            cfg.overlap = overlap;
         end
-        % Number of blocks to estimate aperiodic component
-        nBlocks = floor(nTime ./ windowsamples);
-        % Initialize aperiodic matrix
-        aperiodic_time = nBlocks * windowsamples;
-        aperiodic_continuous = zeros(nVox, aperiodic_time);
-        % Loop over blocks
-        idx_end = 0;
-        for b = 1:nBlocks
-            % Define index
-            idx_st = ((b-1) * windowsamples) + 1;
-            idx_end = idx_st + windowsamples - 1;
-            % Last block can be longer to include all the data
-            if b == nBlocks
-                idx_end = nTime; 
-            else
-                idx_end = idx_st + windowsamples - 1;
+            step_samples = round(windowsamples * (1 - overlap));
+        end
+
+        aperiodic_continuous = zeros(nVox, nTime);
+        overlap_ct           = zeros(1, nTime);
+
+    % Start index
+    win_starts = 1 :step_samples:nTime;
+    
+    for w = 1:length(win_starts)
+        idx_st  = win_starts(w);
+        idx_end = idx_st + windowsamples - 1;
+    
+        % Absorb short tail into this window
+        if w < length(win_starts)
+            next_end = win_starts(w+1) + windowsamples - 1;
+            if next_end > nTime
+                idx_end = nTime;
             end
-           
-            % Extract block of data
-            datablock = datamatrix(:, idx_st:idx_end);
-            % FOOOF Function
-            aperiodic_block = aperiodic2time(datablock, fs, cfg);
-            aperiodic_continuous(:, idx_st:idx_end) = aperiodic_block;
         end
+    
+        idx_end = min(idx_end, nTime);
+    
+        datablock       = datamatrix(:, idx_st:idx_end);
+                cfg.debug_tstart = data.time{1}(idx_st); %%%%%%%%><<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<<
+        aperiodic_block = aperiodic2time(datablock, fs, cfg);
+    
+        aperiodic_continuous(:, idx_st:idx_end) = aperiodic_continuous(:, idx_st:idx_end) + aperiodic_block;
+        overlap_ct(idx_st:idx_end) = overlap_ct(idx_st:idx_end) + 1;
+    
+        if idx_end == nTime; break; end
+    end
+
+        % Average overlapping regions
+        aperiodic_continuous = aperiodic_continuous ./ overlap_ct;
 
         aperiodic_data.trial{1} = aperiodic_continuous;
-        aperiodic_data.time{1} = aperiodic_data.time{1}(1:size(aperiodic_continuous,2));
+        aperiodic_data.time{1}  = aperiodic_data.time{1}(1:nTime);
 
-     
     %% Case: trials
     case 'trials'
         % Size of the blocks    
@@ -151,21 +173,31 @@ switch cfg.datatype
         else
             block_size = cfg.trialblocksize;
         end
-        % Number of blocks to estimate aperiodic component
-        nBlocks = ceil(nTrials / block_size);
+
         % Initialize aperiodic matrix
         aperiodic_trials = zeros(nVox, nTime, nTrials);        
         % Loop over blocks
-        for b = 1:nBlocks
-            % Define index
-            tr_idx_st = (b-1) * block_size + 1;
-            tr_idx_end = min(b * block_size, nTrials);
-            tr_idx = tr_idx_st:tr_idx_end;
-
-            % Extract block of data
-            datablock = datamatrix(:, :, tr_idx);
+        block_starts = 1 : block_size : nTrials;
+        
+        for b = 1:length(block_starts)
+            tr_idx_st  = block_starts(b);
+            tr_idx_end = min(tr_idx_st + block_size - 1, nTrials);
+        
+            % Absorb short tail into this block
+            if b < length(block_starts)
+                next_end = block_starts(b+1) + block_size - 1;
+                if next_end > nTrials
+                    tr_idx_end = nTrials;
+                end
+            end
+        
+            tr_idx          = tr_idx_st:tr_idx_end;
+            datablock       = datamatrix(:, :, tr_idx);
             aperiodic_block = aperiodic2time(datablock, fs, cfg);
+        
             aperiodic_trials(:, :, tr_idx) = aperiodic_block;
+        
+            if tr_idx_end == nTrials; break; end
         end
         
         % Trial structure 
@@ -175,16 +207,14 @@ switch cfg.datatype
 end
 
 % -------------------------------------------------------- %
-% 4. Main function: Powspectrum->FOOOF->Reconstruction to time
+% Main function: FFT->FOOOF->IFFT reconstruction
 % -------------------------------------------------------- %
 
 function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
 
     [nVoxblock, nfft, nTrialsblock] = size(datainside);
 
-    % ---------------------------------------------------------------------
-    % 4.1. FFT
-    % ---------------------------------------------------------------------
+    %% 1. FFT
 
     % Vectorize data, reshape to [nVox x nTrials x nTime]
     data_vector = permute(datainside, [1 3 2]); 
@@ -204,7 +234,7 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     amp_fft = abs(data_fft(:, 1:limit)) ./ nfft;
     frq = (0:limit-1) * (fs / nfft);
    
-    % Single-Sided Amplitude
+    % Single-Sided
     if is_even
         % Exclude DC and Nyquist
         amp_fft(:, 2:end-1) = 2 * amp_fft(:, 2:end-1);
@@ -222,9 +252,7 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     pow_fft_matrix = reshape(pow_fft, [nVoxblock, nTrialsblock, length(frq)]);
     data_fft_matrix = reshape(data_fft, nVoxblock, nTrialsblock, nfft);
 
-    % ---------------------------------------------------------------------
-    % 4.2. FOOOF - Matlab BrainStorm wrapper
-    % ---------------------------------------------------------------------
+    %% 2. FOOOF
    
     is_continuous = isfield(cfg, 'datatype') && strcmp(cfg.datatype, 'continuous');
 
@@ -232,10 +260,8 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     if is_continuous 
         data_wch = datainside(:, :, 1)'; 
         
-        welch_win = round(2 * fs); 
-        if welch_win > nfft
-            welch_win = nfft; 
-        end
+        welch_win = round(min(2, (nfft/fs) / 2) * fs);
+        if welch_win > nfft; welch_win = nfft; end
         
         % Apply welch
         [pxx, ~] = pwelch(data_wch, hanning(welch_win), [], nfft, fs);
@@ -270,24 +296,47 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     peakfit = [fg.peak_fit]; 
     peakfit = reshape(peakfit, [length(fg(1).peak_fit), length(fg)])';
 
-    peak_ratio = peakfit ./ fooofedsp;
-    aperiodic_ratio = 1 - peak_ratio;
-    aperiodic_ratio(aperiodic_ratio < 0) = 0;
-
     % Extract power spectrum
     powspctmlog = [fg.power_spectrum]; 
     powspctmlog = reshape(powspctmlog, [length(fg(1).power_spectrum), length(fg)])';
     powspctm = 10.^powspctmlog;
 
-    % ---------------------------------------------------------------------
-    % 4.3. Reconstruct aperiodic to time
-    % ---------------------------------------------------------------------
-    
+    low_freq_mask = frq(2:end) < 2; % To avoid fooof from finding infraslow <2 Hz peaks that understimate aperiodic
+    peakfit(:, low_freq_mask) = 1;
+    aperiodic_ratio = 1 ./ peakfit;
+
+    %% 3. IFFT    
+
     aperiodic_timesignal = zeros(nVoxblock, nfft, nTrialsblock, 'single');
 
     for tr = 1:nTrialsblock
         raw_power = reshape(pow_fft_matrix(:, tr, 2:end), [nVoxblock, limit-1]);
         raw_aperiodic = raw_power .* aperiodic_ratio;
+
+        if isfield(cfg, 'debug_tstart')
+            t_start = cfg.debug_tstart;
+        else
+            t_start = 0;
+        end
+        t_block = t_start + (0:nfft-1) / fs;        
+        figure('Position', [100 100 1400 500])      
+        subplot(311)
+        plot(data.time{1}, data.trial{1}(2963,:))
+        hold on
+        plot(t_block, datainside(2963,:))
+        title('Extract aperiodic from a segment of the signal')
+        subplot(312)
+        loglog(frq(2:end), raw_power(2963,:), 'b', 'LineWidth', 1.5, 'DisplayName', 'Original Power');
+        hold on;
+        loglog(frq(2:end), raw_aperiodic(2963,:), 'm', 'LineWidth', 1.5, 'DisplayName', 'Aperiodic Power');
+        ylabel('Power');
+        title('Original and Aperiodic Power')
+        subplot(313)
+        semilogx(frq(2:end), peakfit(2963,:), 'm', 'LineWidth', 2, 'DisplayName', 'PeakFit');
+        ylim([0.9 max(peakfit(2963,:))*1.2]);
+        title('Detected peaks')
+        xlabel('Frequency (Hz)')
+
         
         % Take the DC 
         dc_component = reshape(pow_fft_matrix(:, tr, 1), [nVoxblock, 1]);
