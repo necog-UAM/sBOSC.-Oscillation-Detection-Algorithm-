@@ -16,7 +16,7 @@ function [powspctm, thshld, frex, fsample] = sBOSC_timefreq(data, aperiodic, cfg
 % Input Arguments:
 % - data     : [struct] Source-reconstructed data in FieldTrip format.
 % - aperiodic: [struct] Source-reconstructed aperiodic data in Fieldtrip
-%              format
+%              format.
 % - cfg      : [struct] Configuration structure with fields:
 %
 %        cfg.frex        : [vector] Frequencies of interest.
@@ -24,7 +24,7 @@ function [powspctm, thshld, frex, fsample] = sBOSC_timefreq(data, aperiodic, cfg
 %        cfg.frex_window : [scalar] Number of cycles to calculate the
 %                          temporal window width. Default 5;
 %        cfg.apthshld   : [scalar] Percentile of aperiodic power spectrum
-%                          to extract the threshold
+%                          to extract the threshold.
 %
 % Output Arguments:
 % - powspctm : [4D matrix] The power spectrum of the original data. 

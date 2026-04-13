@@ -44,7 +44,6 @@ source_mni.time = 1;
 
 load standard_mri.mat
 
-
 cfg=[];
 cfg.parameter  = 'avg.pow';
 cfg.downsample = 2;

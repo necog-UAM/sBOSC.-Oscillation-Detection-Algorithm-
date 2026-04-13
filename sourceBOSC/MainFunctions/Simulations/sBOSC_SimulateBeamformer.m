@@ -1,6 +1,25 @@
-%% Step 2. Signal from sensors is reconstructed to source space using beamformers
-
 function simsignal_source = sBOSC_SimulateBeamformer(simsignal)
+
+%% sBOSC_SimulateBeamformer
+% Reconstructs sensor-level simulated signals into the source space using an LCMV beamformer.
+% 
+% Description:
+% This function projects MEG sensor-level activity into the brain's 3D source space by:
+% 1- Loading and aligning a standard 10mm head model, grid, and gradiometer geometry.
+% 2- Preparing the leadfield matrix (forward model) with rank reduction.
+% 3- Computing the data covariance matrix from the sensor-level time-series.
+% 4- Estimating spatial filters using the Linearly Constrained Minimum Variance (LCMV) beamformer.
+% 5- Multiplying the sensor data by the spatial filters to reconstruct neural activity at each voxel.
+% 6- Downsampling the resulting source-level signal to 256 Hz and packaging it into a FieldTrip structure.
+%
+% 
+% Input Arguments:
+% - simsignal : [struct] Sensor-level simulated MEG data in FieldTrip format.
+%
+% Output:
+% - simsignal_source: [struct] Source-reconstructed and downsampled (256 Hz) 
+%                     time-series data mapped to a 3D voxel grid, formatted as 
+%                     a FieldTrip structure.
 
 % Load source models (from sBOSC)
 load source_template_10mm_3423.mat
