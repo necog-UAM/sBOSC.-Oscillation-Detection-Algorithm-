@@ -25,6 +25,10 @@ function aperiodic_data = sBOSC_aperiodic(data, cfg)
 %                             trials to average in the frequency domain to estimate the
 %                             aperiodic component. [Default: 'all'].
 %
+%        cfg.overlap        : [scalar] (For 'continuous' only). Proportion of 
+%                             overlap between consecutive windows (0 to 1). 
+%                             [Default: 0.5].
+%
 %        cfg.fooof          : [struct] FOOOF user parameters. If not
 %                             specified, Brainstorm defaults are used.
 %                             - .freq_range       : [min max] Range to fit.
@@ -152,9 +156,14 @@ switch cfg.datatype
         datablock       = datamatrix(:, idx_st:idx_end);
         aperiodic_block = aperiodic2time(datablock, fs, cfg);
     
-        aperiodic_continuous(:, idx_st:idx_end) = aperiodic_continuous(:, idx_st:idx_end) + aperiodic_block;
-        overlap_ct(idx_st:idx_end) = overlap_ct(idx_st:idx_end) + 1;
-    
+        % hanning
+        current_win_len = idx_end - idx_st + 1;
+        crossfade_win = hanning(current_win_len)';
+
+        aperiodic_block_han = aperiodic_block .* crossfade_win;
+        aperiodic_continuous(:, idx_st:idx_end) = aperiodic_continuous(:, idx_st:idx_end) + aperiodic_block_han;
+        overlap_ct(idx_st:idx_end) = overlap_ct(idx_st:idx_end) + crossfade_win;
+
         if idx_end == nTime; break; end
     end
 
@@ -283,22 +292,9 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
     % FOOOF
     [~, fg]= process_fooof("FOOOF_matlab", TF, frq(2:end), opts, opts.hasOptimTools);
 
-    % Extract aperiodic estimate
-    apfit = [fg.ap_fit];
-    apfit = reshape(apfit, [length(fg(1).ap_fit), length(fg)])';
-
-    % Extract model (aperiodic + peaks)
-    fooofedsp = [fg.fooofed_spectrum];
-    fooofedsp =  reshape(fooofedsp, [length(fg(1).fooofed_spectrum), length(fg)])';
-
     % Extract peak fit
     peakfit = [fg.peak_fit]; 
     peakfit = reshape(peakfit, [length(fg(1).peak_fit), length(fg)])';
-
-    % Extract power spectrum
-    powspctmlog = [fg.power_spectrum]; 
-    powspctmlog = reshape(powspctmlog, [length(fg(1).power_spectrum), length(fg)])';
-    powspctm = 10.^powspctmlog;
 
     low_freq_mask = frq(2:end) < 2; % To avoid fooof from finding infraslow <2 Hz peaks that understimate aperiodic
     peakfit(:, low_freq_mask) = 1;
@@ -306,7 +302,7 @@ function aperiodic_timesignal = aperiodic2time(datainside, fs, cfg)
 
     %% 3. IFFT    
 
-    aperiodic_timesignal = zeros(nVoxblock, nfft, nTrialsblock, 'single');
+    aperiodic_timesignal = zeros(nVoxblock, nfft, nTrialsblock);
 
     for tr = 1:nTrialsblock
         raw_power = reshape(pow_fft_matrix(:, tr, 2:end), [nVoxblock, limit-1]);
