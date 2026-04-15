@@ -25,6 +25,7 @@ function [powspctm, thshld, frex, fsample] = sBOSC_timefreq(data, aperiodic, cfg
 %                          temporal window width. Default 5;
 %        cfg.apthshld   : [scalar] Percentile of aperiodic power spectrum
 %                          to extract the threshold.
+%        cfg.resamplefs  : [scalar] (Optional) New sampling frequency.
 %
 % Output Arguments:
 % - powspctm : [4D matrix] The power spectrum of the original data. 
@@ -38,23 +39,23 @@ function [powspctm, thshld, frex, fsample] = sBOSC_timefreq(data, aperiodic, cfg
 %              FieldTrip's ft_freqanalysis. 
 %              Dimensions are [1 x nFrex].
 %
-% - fsample  : [scalar] The new sampling frequency of the data after 
-%              downsampling (128 Hz).
+% - fsample  : [scalar] The new sampling frequency of the data.
 
+if nargin < 3; cfg = []; end
 
 % Defaults
+if ~isfield(cfg, 'frex')
+    error('sBOSC:MissingConfig', 'cfg.frex (frequencies of interest) must be provided.');
+end
 if ~isfield(cfg, 'frex_window'), frex_window = 5; else; frex_window = cfg.frex_window; end
 if ~isfield(cfg, 'apthshld'), apthshld = 95; else; apthshld = cfg.apthshld; end
+if ~isfield(cfg, 'resamplefs'), resamplefs = []; else; resamplefs = cfg.resamplefs; end
 
 % Get cfg options
 Frex = cfg.frex;
 nFrex = length(Frex);
 
 %% Step 1. Prepare and correct signal
-cfg = [];
-cfg.begsample = 1;
-cfg.endsample = size(aperiodic.trial{1},2);
-data = ft_redefinetrial(cfg,data);
 
 nTrials = length(data.trial);
 for trl = 1:nTrials
@@ -64,10 +65,12 @@ for trl = 1:nTrials
 end
 
 % II. Downsample both signals
-cfg = [];
-cfg.resamplefs = 128;
-data = ft_resampledata(cfg, data);
-aperiodic = ft_resampledata(cfg, aperiodic);
+if ~isempty(resamplefs) && data.fsample > resamplefs
+    cfg = [];
+    cfg.resamplefs = resamplefs;
+    data = ft_resampledata(cfg, data);
+    aperiodic = ft_resampledata(cfg, aperiodic);
+end
 fsample = data.fsample;
 
 %% Step 2.Frequency analysis and threshold
@@ -81,7 +84,6 @@ data.sampleinfo = [start_samples, end_samples];
 aperiodic.sampleinfo = [start_samples, end_samples];
 
 powspctm = zeros(nTrials, nVox, nFrex, nTime, 'single');
-
 frex = zeros(1, nFrex);
 thshld = zeros(nFrex, 1,'single');
 
@@ -110,12 +112,7 @@ for fx = 1:nFrex
     powspctmaperiodic = single(freqaperiodic.powspctrm);
 
     % Compute the 95% percentile to obtain threshold
-    powspctmaperiodic = permute(powspctmaperiodic, [2, 1, 4, 3]);  
-    powspctmaperiodic = reshape(powspctmaperiodic, [nVox, nTrials * nTime]);
-
-    % Calculate threshold 
-    thshld(fx) = prctile(prctile(powspctmaperiodic, apthshld, 1), apthshld, 2);
-
+    thshld(fx) = prctile(powspctmaperiodic(:), apthshld);
     clear freqaperiodic powspctmaperiodic
 end
 
