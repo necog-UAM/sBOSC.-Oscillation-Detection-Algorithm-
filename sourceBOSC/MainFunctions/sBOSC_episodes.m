@@ -61,14 +61,14 @@ episocc = false(nTrials, nVoxIN, nFrex, nTp);
 
 for trl=1:nTrials
 
-    spatialpks_trl = squeeze(spatialpks(trl, :, :, :));
+    spatialpks_trl = reshape(spatialpks(trl, :, :, :), [nVox, nFrex, nTp]);
     pow_trl = squeeze(powspctm(trl, :, :, :));
 
     for vin=1:nVoxIN   % only the 1925 voxels inside the cortex to save time
         vidx = voxin(vin);
         neighvoxs = find(connmat(vidx,:)==1);
 
-        tfsmooth = squeeze(logical(mean(spatialpks_trl(neighvoxs, :, :),1)));
+        tfsmooth = reshape(any(spatialpks_trl(neighvoxs, :, :), 1), [nFrex, nTp]);
 
         if ~any(tfsmooth(:)), continue; end
 
