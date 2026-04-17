@@ -217,15 +217,15 @@ for roi = 1:Nroi
     muvoxs = natf_btstrp.mu(voxs,:);
     
     Nk = 4;
-    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);      % k-means 4 clusters max
-    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];           % number of voxels in each cluster  
-  Nk = Nk - sum(nvoxs==1);                                              % eliminate clusters with only 1 member and repeat clustering                                           
-    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);      % k-means adapting number of clusters 
-    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];           % number of voxels in each cluster                       
-    dominclust = find(nvoxs == max(nvoxs));                               % dominant cluster
-    centroidvox = find(D(:,dominclust)==min(D(:,dominclust)));            % voxel closer to centroid
-    represvox(roi) = voxs(centroidvox(1));                                % representative voxel for this AAL region
-     % hold on, histogram(C'),title(aal_label_reduc{roi}),pause                    % visualize pattern of natural frequencies for both clusters
+    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200); 
+    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];         
+  Nk = Nk - sum(nvoxs==1);                                                                                    
+    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);    
+    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];                                
+    dominclust = find(nvoxs == max(nvoxs));                              
+    centroidvox = find(D(:,dominclust)==min(D(:,dominclust)));          
+    represvox(roi) = voxs(centroidvox(1));                               
+     % hold on, histogram(C'),title(aal_label_reduc{roi}),pause               
 end
 
 natfmu_aal      = median(natf_btstrp.mu(represvox,:),2);
@@ -261,7 +261,6 @@ xlim([0 35]), ylims(rr,:) = ylim();
 title(aal_label_reduc{rr},'FontSize',8),
 end
 
-
 % Hist representative vox per ROI pBOSC
 figure,
 sgtitle('Representative vox')
@@ -284,15 +283,15 @@ for roi = 1:Nroi
     muvoxs = natf_Almu.mu(voxs,:);
     
     Nk = 4;
-    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);      % k-means 4 clusters max
-    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];           % number of voxels in each cluster  
-  Nk = Nk - sum(nvoxs==1);                                              % eliminate clusters with only 1 member and repeat clustering                                           
-    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);      % k-means adapting number of clusters 
-    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];           % number of voxels in each cluster                       
-    dominclust = find(nvoxs == max(nvoxs));                               % dominant cluster
-    centroidvox = find(D(:,dominclust)==min(D(:,dominclust)));            % voxel closer to centroid
-    represvox(roi) = voxs(centroidvox(1));                                % representative voxel for this AAL region
-     % hold on, histogram(C'),title(aal_label_reduc{roi}),pause                    % visualize pattern of natural frequencies for both clusters
+    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);   
+    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];          
+  Nk = Nk - sum(nvoxs==1);                                                                                    
+    [idx,C,sumd,D] = kmeans(muvoxs,Nk,'Replicates',5,'MaxIter',200);    
+    nvoxs = [sum(idx==1) sum(idx==2) sum(idx==3) sum(idx==4) ];                          
+    dominclust = find(nvoxs == max(nvoxs));                            
+    centroidvox = find(D(:,dominclust)==min(D(:,dominclust)));          
+    represvox(roi) = voxs(centroidvox(1));                             
+     % hold on, histogram(C'),title(aal_label_reduc{roi}),pause            
 end
 
 natfmu_aalMU      = median(natf_Almu.mu(represvox,:),2);

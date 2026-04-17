@@ -1,4 +1,27 @@
 function [connected_episodes, conepisocc] = sBOSC_connect_episodes(cfg, epis)
+%% sBOSC_connect_episodes
+% Connects adjacent oscillatory episodes that overlap in time and frequency.
+%
+% Description:
+% This function iteratively merges previously identified oscillatory episodes 
+% that are contiguous or overlapping. Upon merging, frequency and power are recalculated 
+% using a duration-weighted average.
+%
+% Input Arguments:
+% - cfg  : [struct]     Configuration structure with fields:
+%       cfg.frex    : [vector] Frequencies of interest in Hz.
+%       cfg.fsample : [scalar] Sampling rate in Hz.
+%       cfg.time    : [scalar] Total number of time points per trial.
+% - epis : [cell array] {nTrials, nVox} array of structs containing
+%                       descriptives (freq, dur_sec, dur_cyc, timeps, power) 
+%                       for each original episode.
+%
+% Output Arguments:
+% - connected_episodes : [cell array] {nTrials, nVox} array of structs containing
+%                                     descriptives (freq, dur_sec, dur_cyc, timeps, power) 
+%                                     for the newly merged episodes.
+% - conepisocc         : [4D logical] Boolean mask of connected episode occurrences 
+%                                     with dimensions [nTrials x nVox x nFrex x nTp].
 
 fsample = cfg.fsample;
 frex = cfg.frex;
