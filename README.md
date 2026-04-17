@@ -184,6 +184,6 @@ This last step connects adjacent episodes to account for transient disconnection
 If you use sBOSC in your research, please cite:
 
 ```matlab
-Stern, E., Niso, G., & Capilla, A. (2025). pBOSC: A method for source-level identification of neural oscillations in electromagnetic brain signals. bioRxiv, 2025.07.20.665618. https://doi.org/10.1101/2025.07.20.665618
+Stern, E., Niso, G., & Capilla, A. (2025). sBOSC: A method for source-level identification of neural oscillations in electromagnetic brain signals. bioRxiv, 2025.07.20.665618. https://doi.org/10.1101/2025.07.20.665618
 
 ```
