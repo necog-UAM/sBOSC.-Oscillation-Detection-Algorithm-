@@ -91,7 +91,7 @@ Next, we isolate the aperiodic (1/f) background activity using the specparam alg
                     sim_aperiodic = sBOSC_aperiodic(simsignal_source, cfg);
 ```
 
-For each overlapping segment, the specparam algorithm identifies spectral peaks, which are then removed from the power spectrum. Note while the the simulated peaks at 12 and 4 Hz are correctly deteceted and removed, two false positives are also captures around 93 Hz.
+For each overlapping segment, the specparam algorithm identifies spectral peaks, which are then removed from the power spectrum. Note the 4 and 12 hz peaks.
 
 
 
