@@ -112,7 +112,7 @@ for s = 1:Nsub
     
                 cfg = [];
                 cfg.mri = mri;
-                cfg.figure = 'yes';     % to check that sensors, volyume and grid are correctly coregistered
+                cfg.figure = 'yes';     % to check that sensors, volume and grid are correctly coregistered
                 [source_forward, source_inverse, datasource] = sBOSC_beamforming(datacond, cfg);   % do you want to change the anatomical labels for the axes [Y, n]? Y (r,a,s,i)
                 
                 datas{ct}{ses} = datasource;
@@ -352,7 +352,7 @@ for s = 1:Nsub
     tmp_powR_z(isnan(tmp_powR_z)) = 0; tmp_powL_z(isnan(tmp_powL_z)) = 0;
     tmp_cycR_z(isnan(tmp_cycR_z)) = 0; tmp_cycL_z(isnan(tmp_cycL_z)) = 0;
 
-    % Raw data (before normalization for plotting)
+    % Raw data
     tmp_powR(isnan(tmp_powR)) = 0; tmp_powL(isnan(tmp_powL)) = 0;
     tmp_cycR(isnan(tmp_cycR)) = 0; tmp_cycL(isnan(tmp_cycL)) = 0;
 
@@ -450,15 +450,15 @@ sBOSC_sourcefig(sum(t_pow_result(:,fband),2),[],cfg)
 [~,idxmin] = min(valmin);
 
 figure('Color', 'w', 'Units', 'centimeters', 'Position', [5, 5, 15, 10]);
-p1 = plot(frex, mean_pre_powL(voxmin(idxmin),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5); % MATLAB default blue
+p1 = plot(frex, mean_pre_powL(voxmin(idxmin),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5);
 hold on;
-p2 = plot(frex, mean_pre_powR(voxmin(idxmin),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5); % MATLAB default red
+p2 = plot(frex, mean_pre_powR(voxmin(idxmin),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5);
 ax = gca;
 ax.FontSize = 12;
-ax.FontName = 'Arial'; % Standard font for publications
+ax.FontName = 'Arial';
 ax.LineWidth = 1.2;
-ax.TickDir = 'out';    % Ticks point outward
-ax.Box = 'off';        % Removes the top and right axis lines
+ax.TickDir = 'out';
+ax.Box = 'off';
 xlim([min(frex) max(frex)]);
 xlabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Raw Power', 'FontSize', 14, 'FontWeight', 'bold');
@@ -468,15 +468,15 @@ lgd.FontSize = 10;
 
 
 figure('Color', 'w', 'Units', 'centimeters', 'Position', [5, 5, 15, 10]);
-p1 = plot(frex, mean_pre_powR(voxmax(idxmax),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5); % MATLAB default blue
+p1 = plot(frex, mean_pre_powR(voxmax(idxmax),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5);
 hold on;
-p2 = plot(frex, mean_pre_powL(voxmax(idxmax),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5); % MATLAB default red
+p2 = plot(frex, mean_pre_powL(voxmax(idxmax),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5);
 ax = gca;
 ax.FontSize = 12;
-ax.FontName = 'Arial'; % Standard font for publications
+ax.FontName = 'Arial'
 ax.LineWidth = 1.2;
-ax.TickDir = 'out';    % Ticks point outward
-ax.Box = 'off';        % Removes the top and right axis lines
+ax.TickDir = 'out';
+ax.Box = 'off';
 xlim([min(frex) max(frex)]);
 xlabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Raw Power', 'FontSize', 14, 'FontWeight', 'bold');
@@ -491,15 +491,15 @@ lgd.FontSize = 10;
 [~,idxmin] = min(valmin);
 
 figure('Color', 'w', 'Units', 'centimeters', 'Position', [5, 5, 15, 10]);
-p1 = plot(frex, mean_pre_cycL(voxmin(idxmin),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5); % MATLAB default blue
+p1 = plot(frex, mean_pre_cycL(voxmin(idxmin),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5);
 hold on;
-p2 = plot(frex, mean_pre_cycR(voxmin(idxmin),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5); % MATLAB default red
+p2 = plot(frex, mean_pre_cycR(voxmin(idxmin),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5);
 ax = gca;
 ax.FontSize = 12;
-ax.FontName = 'Arial'; % Standard font for publications
+ax.FontName = 'Arial';
 ax.LineWidth = 1.2;
-ax.TickDir = 'out';    % Ticks point outward
-ax.Box = 'off';        % Removes the top and right axis lines
+ax.TickDir = 'out'; 
+ax.Box = 'off'; 
 xlim([min(frex) max(frex)]);
 xlabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Raw Power', 'FontSize', 14, 'FontWeight', 'bold');
@@ -508,15 +508,15 @@ lgd.Box = 'off';
 lgd.FontSize = 10;
 
 figure('Color', 'w', 'Units', 'centimeters', 'Position', [5, 5, 15, 10]);
-p1 = plot(frex, mean_pre_cycR(voxmax(idxmax),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5); % MATLAB default blue
+p1 = plot(frex, mean_pre_cycR(voxmax(idxmax),:), 'Color', [0 0.4470 0.7410], 'LineWidth', 2.5); 
 hold on;
-p2 = plot(frex, mean_pre_cycL(voxmax(idxmax),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5); % MATLAB default red
+p2 = plot(frex, mean_pre_cycL(voxmax(idxmax),:), 'Color', [0.8500 0.3250 0.0980], 'LineWidth', 2.5); 
 ax = gca;
 ax.FontSize = 12;
-ax.FontName = 'Arial'; % Standard font for publications
+ax.FontName = 'Arial';
 ax.LineWidth = 1.2;
-ax.TickDir = 'out';    % Ticks point outward
-ax.Box = 'off';        % Removes the top and right axis lines
+ax.TickDir = 'out'; 
+ax.Box = 'off';
 xlim([min(frex) max(frex)]);
 xlabel('Frequency (Hz)', 'FontSize', 14, 'FontWeight', 'bold');
 ylabel('Raw Power', 'FontSize', 14, 'FontWeight', 'bold');
